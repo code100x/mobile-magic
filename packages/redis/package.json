@@ -1,5 +1,5 @@
 {
-  "name": "redis",
+  "name": "my-redis",
   "module": "index.ts",
   "type": "module",
   "exports": {
