@@ -10,7 +10,11 @@ app.use(cors());
 
 app.post("/project", authMiddleware, async (req, res) => {
   const { prompt } = req.body;
-  const userId = req.userId!;
+  if(!req.userId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  const userId = req.userId;
   //TODO: add logic to get a useful name for the project from the prompt
   const description = prompt.split("\n")[0];
   const project = await prismaClient.project.create({
@@ -20,7 +24,11 @@ app.post("/project", authMiddleware, async (req, res) => {
 });
 
 app.get("/projects", authMiddleware, async (req, res) => {
-  const userId = req.userId!;
+  if(!req.userId) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+  const userId = req.userId;
   const projects = await prismaClient.project.findMany({
     where: { userId },
   });
@@ -28,7 +36,6 @@ app.get("/projects", authMiddleware, async (req, res) => {
 });
 
 app.get("/prompts/:projectId", authMiddleware, async (req, res) => {
-  const userId = req.userId!;
   const projectId = req.params.projectId;
 
   const prompts = await prismaClient.prompt.findMany({
@@ -38,7 +45,6 @@ app.get("/prompts/:projectId", authMiddleware, async (req, res) => {
 });
 
 app.get("/actions/:projectId", authMiddleware, async (req, res) => {
-  const userId = req.userId!;
   const projectId = req.params.projectId;
 
   const actions = await prismaClient.action.findMany({

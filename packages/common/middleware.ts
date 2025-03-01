@@ -3,15 +3,20 @@ import jwt from "jsonwebtoken";
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization; // Bearer token
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = authHeader?.split(" ")[1];
 
   if (!token) {
     res.status(401).json({ message: "Unauthorized" });
     return;
   }
 
-  console.log(process.env.JWT_PUBLIC_KEY);
-  const decoded = jwt.verify(token, process.env.JWT_PUBLIC_KEY!, {
+  const publicKey = process.env.JWT_PUBLIC_KEY;
+  if (!publicKey) {
+    res.status(500).json({ message: "jwt public key not found" });
+    return;
+  }
+  console.log(publicKey);
+  const decoded = jwt.verify(token, publicKey, {
     algorithms: ["RS256"],
   });
 
