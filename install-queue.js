@@ -9,7 +9,7 @@ const execPromise = util.promisify(exec);
 async function runNpmInstall(path) {
     try {
         console.log(`Running npm install in ${path}`);
-        const { stdout, stderr } = await execPromise('npm install', { cwd: path });
+        const { stdout, stderr } = await execPromise('bun install', { cwd: path });
         console.log(stdout);
         if (stderr) {
             console.error(stderr);
@@ -31,10 +31,15 @@ async function runSequentially(paths) {
 
 // List of workspace package directories within the turborepo
 const workspacePaths = [
-    'packages/package1',
-    'packages/package2',
+    'packages/common',
+    'packages/db',
+    'packages/redis',
+    'packages/eslint-config',
+    'packages/typescript-config',
+    'apps/code-server',
     'apps/frontend',
-    // Add other paths as needed
+    'apps/primary-backend',
+    'apps/worker',
 ];
 
 runSequentially(workspacePaths)

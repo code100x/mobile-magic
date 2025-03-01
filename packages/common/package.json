@@ -12,6 +12,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.38.0"
+    "@anthropic-ai/sdk": "^0.38.0",
+    "dotenv": "^16.4.7"
   }
 }

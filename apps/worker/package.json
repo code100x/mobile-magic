@@ -5,6 +5,9 @@
   "devDependencies": {
     "@types/bun": "latest"
   },
+  "scripts": {
+    "dev": "bun run index.ts"
+  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
@@ -12,6 +15,7 @@
     "@anthropic-ai/sdk": "^0.38.0",
     "@types/express": "^5.0.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "express": "^4.21.2",
+    "openai": "^4.86.1"
   }
 }
