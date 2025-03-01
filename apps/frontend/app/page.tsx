@@ -7,7 +7,7 @@ import { ProjectsDrawer } from "@/components/ProjectsDrawer";
 
 export default function Home() {
   return (
-    <div className="p-4">
+    <div className="p-4 bg-gradient-to-b from-blue-600/50 to-50% to-black h-screen">
       <Appbar />
       <ProjectsDrawer />
       <div className="max-w-2xl mx-auto pt-32">
