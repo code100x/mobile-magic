@@ -6,13 +6,16 @@
     "./client": "./index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "dotenv-cli": "^8.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "aws-sdk": "^2.1692.0",
+    "dotenv": "^16.4.7",
     "prisma": "^6.4.1"
   }
 }

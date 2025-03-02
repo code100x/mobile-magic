@@ -1,33 +1,48 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://neondb_owner:npg_SCQFV20Lusxy@ep-summer-math-a53yetkz-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum InstanceStatus {
+  ACTIVE
+  DRAINING
+  TERMINATED
 }
 
-model Project {
-  id          String   @id @default(uuid())
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  prompt      Prompt[]
-  actions     Action[]
-  userId      String
+enum RequestStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model WorkerInstance {
+  id           String         @id @default(uuid())
+  instanceId   String         @unique
+  status       InstanceStatus @default(ACTIVE)
+  lastActivity DateTime       @updatedAt
+  createdAt    DateTime       @default(now())
+  requests     WorkerRequest[]
+  region       String
+  capacity     Int            @default(1)
+}
+
+model WorkerRequest {
+  id           String         @id @default(uuid())
+  instance     WorkerInstance @relation(fields: [instanceId], references: [id])
+  instanceId   String
+  project      Project        @relation(fields: [projectId], references: [id])
+  projectId    String
+  status       RequestStatus  @default(PENDING)
+  startedAt    DateTime       @default(now())
+  completedAt  DateTime?
+  prompt       Prompt?        @relation(fields: [promptId], references: [id])
+  promptId     String?        @unique  // Critical fix
 }
 
 model Prompt {
@@ -38,7 +53,30 @@ model Prompt {
   updatedAt DateTime @updatedAt
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String
+  request   WorkerRequest? // Optional but recommended
 }
+
+// Keep your existing models below
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  projects  Project[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  prompts     Prompt[]
+  actions     Action[]
+  requests    WorkerRequest[]
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+}
+
 
 model Action {
   id        String   @id @default(uuid())
@@ -53,5 +91,3 @@ enum PromptType {
   USER
   SYSTEM
 }
-
-

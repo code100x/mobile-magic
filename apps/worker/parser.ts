@@ -1,57 +1,61 @@
-/*
-    <boltArtifact>
-        <boltAction type="shell">
-            npm run start
-        </boltAction>
-        <boltAction type="file" filePath="src/index.js">
-            console.log("Hello, world!");
-        </boltAction>
-    </boltArtifact>
-*/
-
 export class ArtifactProcessor {
     public currentArtifact: string;
+    public instanceIds: string[];
     private onFileContent: (filePath: string, fileContent: string) => void;
     private onShellCommand: (shellCommand: string) => void;
-
-    constructor(currentArtifact: string, onFileContent: (filePath: string, fileContent: string) => void, onShellCommand: (shellCommand: string) => void) {
-        this.currentArtifact = currentArtifact;
-        this.onFileContent = onFileContent;
-        this.onShellCommand = onShellCommand;
+  
+    constructor(
+      instanceIds: string[],
+      onFileContent: (filePath: string, fileContent: string) => void,
+      onShellCommand: (shellCommand: string) => void
+    ) {
+      this.instanceIds = instanceIds;
+      this.currentArtifact = '';
+      this.onFileContent = onFileContent;
+      this.onShellCommand = onShellCommand;
     }
-
+  
     append(artifact: string) {
-        this.currentArtifact += artifact;
+      this.currentArtifact += artifact;
+      this.parse();
     }
-
-    parse() {
-       const latestActionStart = this.currentArtifact.split("\n").findIndex((line) => line.includes("<boltAction type="));
-       const latestActionEnd = this.currentArtifact.split("\n").findIndex((line) => line.includes("</boltAction>")) ?? (this.currentArtifact.split("\n").length - 1);
-
-       if (latestActionStart === -1) {
-        return;
-       }
-
-       const latestActionType = this.currentArtifact.split("\n")[latestActionStart].split("type=")[1].split(" ")[0].split(">")[0];
-       const latestActionContent = this.currentArtifact.split("\n").slice(latestActionStart, latestActionEnd + 1).join("\n");
-
-       try {
-       if (latestActionType === "\"shell\"") {
-        let shellCommand = latestActionContent.split('\n').slice(1).join('\n');
-        if (shellCommand.includes("</boltAction>")) {
-            shellCommand = shellCommand.split("</boltAction>")[0];
-            this.currentArtifact = this.currentArtifact.split(latestActionContent)[1];
-            this.onShellCommand(shellCommand);
-        }
-       } else if (latestActionType === "\"file\"") {
-        const filePath = this.currentArtifact.split("\n")[latestActionStart].split("filePath=")[1].split(">")[0];
-        let fileContent = latestActionContent.split("\n").slice(1).join("\n");
-        if (fileContent.includes("</boltAction>")) {
-            fileContent = fileContent.split("</boltAction>")[0];
-            this.currentArtifact = this.currentArtifact.split(latestActionContent)[1];
-            this.onFileContent(filePath.split("\"")[1], fileContent);
-        }
-       }
-    } catch(e) {}
+  
+    async finalize() {
+      // Cleanup logic for all instances
+      this.currentArtifact = '';
+      return Promise.resolve();
     }
-}
+  
+    private parse() {
+      const lines = this.currentArtifact.split("\n");
+      const actionStart = lines.findIndex(line => line.includes("<boltAction"));
+      const actionEnd = lines.findIndex(line => line.includes("</boltAction>"));
+  
+      if (actionStart === -1 || actionEnd === -1) return;
+  
+      try {
+        const actionTypeLine = lines[actionStart];
+        const actionContent = lines.slice(actionStart, actionEnd + 1).join("\n");
+  
+        if (actionTypeLine.includes('type="shell"')) {
+          const command = lines.slice(actionStart + 1, actionEnd)
+            .join("\n")
+            .replace("</boltAction>", "")
+            .trim();
+          this.onShellCommand(command);
+        } else if (actionTypeLine.includes('type="file"')) {
+          const filePathMatch = actionTypeLine.match(/filePath="([^"]+)"/);
+          if (filePathMatch) {
+            const content = lines.slice(actionStart + 1, actionEnd)
+              .join("\n")
+              .replace("</boltAction>", "");
+            this.onFileContent(filePathMatch[1], content);
+          }
+        }
+        
+        this.currentArtifact = lines.slice(actionEnd + 1).join("\n");
+      } catch (error) {
+        console.error('Error parsing artifact:', error);
+      }
+    }
+  }
