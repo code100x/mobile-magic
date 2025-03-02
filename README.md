@@ -40,6 +40,13 @@ mobile-magic/
 
 2. Setup environment 
 - copy all the `.env.example` into `.env`
+   ```bash
+   cp packages/db/.env.example packages/db/.env
+   cp packages/redis/.env.example packages/redis/.env
+   cp apps/worker/.env.example apps/worker/.env
+   cp apps/frontend/.env.example apps/frontend/.env
+   cp apps/primary-backend/.env.example apps/primary-backend/.env
+   ```
 - setup postgresql database using docker
    ```bash
    docker run -d -e POSTGRES_PASSWORD=mypassword -p 5432:5432 postgres
