@@ -20,5 +20,17 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@aws-sdk/client-auto-scaling": "^3.758.0",
+    "@aws-sdk/client-cloudwatch": "^3.758.0",
+    "@aws-sdk/client-ec2": "^3.758.0",
+    "@types/node": "^22.13.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "prisma": "^6.4.1",
+    "winston": "^3.17.0"
+  }
 }

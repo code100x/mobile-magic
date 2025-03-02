@@ -7,9 +7,14 @@
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-
+    "types": ["node", "aws-sdk"],
+    "paths": {
+      "./monitoring": ["./worker/monitoring"]
+    },
+    "esModuleInterop": true,
+    "moduleResolution": "bundler"
     // Bundler mode
-    "moduleResolution": "bundler",
+  ,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,

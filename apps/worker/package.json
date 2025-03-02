@@ -3,15 +3,22 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/aws-sdk": "^2.7.4",
+    "@types/bun": "latest",
+    "@types/node": "^22.13.8",
+    "@types/winston": "^2.4.4"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.38.0",
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@aws-sdk/client-auto-scaling": "^3.758.0",
+    "@aws-sdk/client-ec2": "^3.758.0",
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2"
   }
 }
