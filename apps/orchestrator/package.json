@@ -1,0 +1,23 @@
+{
+  "name": "orchestrator",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.0"
+  },
+  "scripts": {
+    "start": "bun index.ts",
+    "dev": "bun --watch src/index.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1692.0",
+    "common": "*",
+    "redis-client":"*",
+    "express": "^4.21.2"
+  }
+}
