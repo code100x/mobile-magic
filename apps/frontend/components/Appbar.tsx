@@ -2,8 +2,8 @@ import { SignInButton, SignUpButton, SignedOut } from "@clerk/nextjs";
 
 export function Appbar() {
   return (
-    <div className="flex justify-between px-2 py-1">
-      <div className="font-bold text-2xl italic text-white hover:text-neutral-300 transition-colors duration-300 z-40">
+    <div className="flex justify-between px-2 py-1 ">
+      <div className="font-bold cursor-pointer text-2xl italic text-white hover:text-neutral-300 transition-colors duration-300 z-40">
         Bolty
       </div>
       <div className="flex items-center gap-4">

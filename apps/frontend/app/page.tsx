@@ -10,7 +10,12 @@ export default function Home() {
     <div className="p-4 bg-gradient-to-b from-blue-600/50 to-50% to-black h-screen">
       <Appbar />
       <ProjectsDrawer />
-      <div className="max-w-2xl mx-auto pt-32">
+      <div className="max-w-2xl mx-auto pt-16  flex flex-col">
+        <div className="pb-14 mx-auto">
+          <span className="px-3 py-1 text-center text-sm font-semibold rounded-full bg-gradient-to-l from-emerald-700 to to-orange-400 shadow-xl ">
+            ✨ simply the mobile-magic
+          </span>
+        </div>
         <div className="text-2xl font-bold text-center">
           What do you want to build?
         </div>
