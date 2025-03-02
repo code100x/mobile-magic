@@ -13,5 +13,9 @@ USER coder
 # Expose code-server's default port
 EXPOSE 8080
 
-# Start code-server on container launch
+# Ensure the settings.json file exists and set the default theme to Dark Mode
+RUN mkdir -p /home/coder/.local/share/code-server/User && \
+    echo '{ "workbench.colorTheme": "Default Dark+" }' > /home/coder/.local/share/code-server/User/settings.json
+
+# Start code-server
 CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080", "/tmp/bolty-worker"]
