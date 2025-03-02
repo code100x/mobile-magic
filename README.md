@@ -77,12 +77,6 @@ mobile-magic/
   docker run -d -p 8080:8080 -p 8081:8081 -v /tmp/bolty-worker:/tmp/bolty-worker code-server-update
   ```
 
-- run the worker
-  ```bash
-  cd apps/worker
-  bun index.ts
-  ```
-
 
 1. setup redis using docker
    ```bash
@@ -90,16 +84,9 @@ mobile-magic/
    ```
 
 2. run the project
-- run frontend from `/`
    ```bash
    bun run dev
    ```
-- run backend from `/apps/primary-backend`
-   ```bash
-   bun index.ts
-   ```
-
-- add the 
 
 ## Available Scripts
 - `bun run build` - Build all packages and apps
