@@ -1,5 +1,5 @@
 "use client";
-import { Appbar } from "@/components/Appbar";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { WORKER_URL } from "@/config";
