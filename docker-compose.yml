@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mobile-magic
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  db_data:
+  redis_data:
