@@ -1,4 +1,5 @@
 "use client";
+import { use} from "react";
 import { Appbar } from "@/components/Appbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +12,12 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { WORKER_API_URL } from "@/config";
 
-export default function ProjectPage({ params }: { params: { projectId: string } }) {
-    const { prompts } = usePrompts(params.projectId);
-    const { actions } = useActions(params.projectId);
+type PageParams = Promise<{ projectId: string }>;
+
+export default function ProjectPage({ params }: { params: PageParams }) {
+    const resolvedParams = use(params);
+    const { prompts } = usePrompts(resolvedParams.projectId);
+    const { actions } = useActions(resolvedParams.projectId);
     const [prompt, setPrompt] = useState("");
     const { getToken } = useAuth();
 
@@ -38,7 +42,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                     <Button onClick={async () => {
                         const token = await getToken();
                         axios.post(`${WORKER_API_URL}/prompt`, {
-                            projectId: params.projectId,
+                            projectId: resolvedParams.projectId,
                             prompt: prompt,
                         }, {
                             headers: {
@@ -51,7 +55,7 @@ export default function ProjectPage({ params }: { params: { projectId: string } 
                 </div>
             </div>
             <div className="w-3/4 p-8">
-                <iframe src={`${WORKER_URL}/`} width={"100%"}  height={"100%"}/>
+                <iframe src={`${WORKER_URL}/`} width={"100%"} height={"100%"} title="Worker"/>
             </div>
         </div>
     </div>

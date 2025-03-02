@@ -10,6 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error("API_KEY is not defined");
+}
+
 app.post("/prompt", async (req, res) => {
   const { prompt, projectId } = req.body;
   const client = new Anthropic();
@@ -31,10 +35,10 @@ app.post("/prompt", async (req, res) => {
     },
   });
 
-  let artifactProcessor = new ArtifactProcessor("", (filePath, fileContent) => onFileUpdate(filePath, fileContent, projectId), (shellCommand) => onShellCommand(shellCommand, projectId));
+  const artifactProcessor = new ArtifactProcessor("", (filePath, fileContent) => onFileUpdate(filePath, fileContent, projectId), (shellCommand) => onShellCommand(shellCommand, projectId));
   let artifact = "";
 
-  let response = client.messages.stream({
+  const response = client.messages.stream({
     messages: allPrompts.map((p: any) => ({
       role: p.type === "USER" ? "user" : "assistant",
       content: p.content,
