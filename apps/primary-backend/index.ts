@@ -8,6 +8,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+const PORT = 9090;
+
 app.post("/project", authMiddleware, async (req, res) => {
   const { prompt } = req.body;
   if(!req.userId) {
@@ -54,6 +56,6 @@ app.get("/actions/:projectId", authMiddleware, async (req, res) => {
 });
 
 
-app.listen(9090, () => {
-  console.log("Server is running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
