@@ -22,7 +22,7 @@ import {
     ]
   });
   
-  // Metric-related types and implementation
+ 
   export interface MetricData extends Omit<MetricDatum, 'Timestamp'> {
     timestamp?: Date;
   }
@@ -38,14 +38,14 @@ import {
     }
   };
   
-  // Health monitoring types
+  
   export interface HealthData {
     status: 'healthy' | 'degraded' | 'unhealthy';
     message?: string;
     timestamp: Date;
   }
   
-  export type HealthStatus = HealthData['status'];// For metrics
+  export type HealthStatus = HealthData['status'];
   const metricData: MetricData = {
     MetricName: 'APIRequests',
     Value: 1,
@@ -58,7 +58,6 @@ import {
     MetricData: [metricData]
   });
   
-  // For health status
   const healthCheck: HealthData = {
     status: 'healthy',
     timestamp: new Date(),

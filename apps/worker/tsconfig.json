@@ -13,7 +13,7 @@
     },
     "esModuleInterop": true,
     "moduleResolution": "bundler"
-    // Bundler mode
+
   ,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,

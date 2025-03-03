@@ -1,4 +1,4 @@
-// worker/asg-service.ts
+
 import {
     AutoScalingClient,
     DescribeAutoScalingGroupsCommand,
@@ -88,28 +88,28 @@ import {
       try {
         logger.info(`Starting drain process for instance ${instanceId}`);
   
-        // Mark instance as draining
+        
         await prismaClient.workerInstance.update({
           where: { instanceId },
           data: { status: 'DRAINING' }
         });
   
-        // Wait for active requests to complete
+       
         await this.waitForActiveRequests(instanceId);
   
-        // Detach from ASG
+     
         await this.asgClient.send(new DetachInstancesCommand({
           AutoScalingGroupName: this.asgName,
           InstanceIds: [instanceId],
           ShouldDecrementDesiredCapacity: true
         }));
   
-        // Terminate instance
+     
         await this.ec2Client.send(new TerminateInstancesCommand({
           InstanceIds: [instanceId]
         }));
   
-        // Cleanup database record
+       
         await prismaClient.workerInstance.delete({
           where: { instanceId }
         });

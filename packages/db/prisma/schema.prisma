@@ -1,4 +1,4 @@
-// schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -42,7 +42,7 @@ model WorkerRequest {
   startedAt    DateTime       @default(now())
   completedAt  DateTime?
   prompt       Prompt?        @relation(fields: [promptId], references: [id])
-  promptId     String?        @unique  // Critical fix
+  promptId     String?        @unique  
 }
 
 model Prompt {
@@ -53,10 +53,9 @@ model Prompt {
   updatedAt DateTime @updatedAt
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String
-  request   WorkerRequest? // Optional but recommended
+  request   WorkerRequest? 
 }
 
-// Keep your existing models below
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
