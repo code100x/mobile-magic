@@ -1,0 +1,18 @@
+{
+  "name": "worker-orchestrator",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-auto-scaling": "^3.758.0",
+    "@aws-sdk/client-ec2": "^3.758.0",
+    "@types/express": "^5.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
