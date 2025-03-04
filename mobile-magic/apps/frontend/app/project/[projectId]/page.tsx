@@ -20,23 +20,8 @@ interface Action {
 }
 
 export default function ProjectPage({ params }: { params: { projectId: string } }) {
-    const prompts = [
-        { id: '1', content: 'Show me a sample chart', type: 'USER' },
-        { id: '2', content: 'Explain this data', type: 'USER' },
-    ];
-
-    const actions: Action[] = [
-        { 
-            id: 'a1', 
-            content: 'Here\'s your bar chart visualizing the data:', 
-            code: 'chart.bar(data, x="category", y="values")'
-        },
-        { 
-            id: 'a2', 
-            content: 'This data shows a clear trend in quarterly sales. The second quarter had the highest performance, with a 27% increase compared to Q1.', 
-            code: 'data.describe()' 
-        },
-    ];
+    const { prompts } = usePrompts(params.projectId);
+    const { actions } = useActions(params.projectId) as { actions: Action[] };
     const [prompt, setPrompt] = useState("");
     const { getToken } = useAuth();
     const [copied, setCopied] = useState<string | null>(null);
