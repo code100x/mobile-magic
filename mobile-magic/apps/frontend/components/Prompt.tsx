@@ -25,9 +25,13 @@ export function Prompt() {
         placeholder="Create a chess application..."
 				value={prompt}
 				onChange={(e) => setPrompt(e.target.value)}
-				className="py-4 pl-4 pr-12 min-h-28 max-h-40 overflow-auto"
+				className="py-4 pl-4 pr-12 min-h-28 max-h-40 overflow-auto resize-none"
 			/>
       {prompt && (
+        <div>
+        <Button variant="ghost" className="absolute top-4 right-16 cursor-pointer border-gray-800 p-2 h-9 w-9">
+            <Paperclip className="w-5 h-5 text-gray-500 " />
+        </Button>
 				<Button
 					className="absolute top-4 right-4 cursor-pointer"
 					onClick={async () => {
@@ -53,6 +57,7 @@ export function Prompt() {
         }}>
           <Send />
         </Button>
+        </div>
       )}
       <div className="max-w-2xl mx-auto pt-4">
 				<TemplateButtons onTemplateClick={handleTemplateClick} />
