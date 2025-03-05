@@ -128,3 +128,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thumb-rounded::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+  }
+
+  .scrollbar-thumb-secondary-foreground\/20::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--secondary-foreground) / 0.2);
+  }
+
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}

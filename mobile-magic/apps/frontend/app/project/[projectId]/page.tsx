@@ -2,85 +2,195 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { WORKER_URL } from "@/config";
+import { WORKER_URL, WORKER_API_URL } from "@/config";
 import { Send } from "lucide-react";
 import { usePrompts } from "@/hooks/usePrompts";
 import { useActions } from "@/hooks/useActions";
 import axios from "axios";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { WORKER_API_URL } from "@/config";
 import { ProjectsDrawer } from "@/components/ProjectsDrawer";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 
+export default function ProjectPage() {
+  const { projectId } = useParams();
 
-export default function ProjectPage({ params }: { params: { projectId: string } }) {
-    const { prompts } = usePrompts(params.projectId);
-    const { actions } = useActions(params.projectId);
-    const [prompt, setPrompt] = useState("");
-    const { getToken } = useAuth();
-    const {user} = useUser()
+  const [isReady, setIsReady] = useState(false);
+  const [prompt, setPrompt] = useState("");
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
 
-    const submitPrompt = async () => {
-					const token = await getToken();
-					axios.post(
-						`${WORKER_API_URL}/prompt`,
-						{
-							projectId: params.projectId,
-							prompt: prompt,
-						},
-						{
-							headers: {
-								Authorization: `Bearer ${token}`,
-							},
-						},
-					);
-					setPrompt("");
-				};
+  const { prompts } = usePrompts(projectId as string);
+  const { actions } = useActions(projectId as string);
 
-    return <div> 
-        <div className="flex pt-16 flex-col md:flex-row">
-            <div className="w-full md:w-1/4 h-[93vh] flex flex-col justify-between p-4">
-                <div className="pt-4">
-                    <Button variant={"ghost"} className="bg-primary-foreground rounded-full">
-                        Chat history
-                    </Button> 
-                    <div className="mx-auto py-3">
-                        <div className="flex flex-col gap-3">
-                            {prompts.filter((prompt) => prompt.type === "USER").map((prompt) => (
-                                <span key={prompt.id} className="flex gap-2 py-3 px-2 border rounded bg-secondary">
-                                    <Image src={user?.imageUrl || ""} width={10} height={10} alt="Profile picture" className="rounded-full w-6 h-6" />
-                                    {prompt.content}
-                                </span>
-                            ))}
-                        </div> 
-                        {actions.map((action) => (
-                            <div key={action.id}>
-                                {action.content}
+  const { getToken } = useAuth();
+  const { user } = useUser();
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsReady(!!projectId);
+
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const isNearBottom =
+        scrollContainer.scrollHeight -
+          scrollContainer.scrollTop -
+          scrollContainer.clientHeight <
+        50;
+
+      setIsUserScrolling(!isNearBottom);
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll);
+
+    if (!isUserScrolling) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handleScroll);
+    };
+  }, [projectId, prompts, actions, isUserScrolling]);
+
+  const submitPrompt = useCallback(async () => {
+    if (!prompt.trim()) return;
+    try {
+      const token = await getToken();
+      await axios.post(
+        `${WORKER_API_URL}/prompt`,
+        {
+          projectId: projectId,
+          prompt: prompt,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setPrompt("");
+    } catch (error) {
+      console.error("Failed to submit prompt:", error);
+    }
+  }, [prompt, projectId, getToken]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        submitPrompt();
+      }
+    },
+    [submitPrompt]
+  );
+
+  if (!isReady)
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+
+  return (
+    <div className="h-screen flex flex-col pt-16">
+      <div className="flex flex-grow overflow-hidden">
+        <div className="w-full md:w-1/4 flex flex-col p-4 overflow-hidden">
+          <Button
+            variant={"ghost"}
+            className="bg-primary-foreground rounded-full mb-3 self-start"
+          >
+            Chat history
+          </Button>
+          <div className="flex-grow overflow-hidden border rounded-lg shadow-sm bg-background flex flex-col">
+            <div
+              ref={scrollContainerRef}
+              className="flex-grow overflow-y-auto px-4 py-4 space-y-4 scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-secondary-foreground/20 scrollbar-track-transparent"
+            >
+              {prompts
+                .filter((prompt) => prompt.type === "USER")
+                .map((prompt) => {
+                  // Convert createdAt to Date object if it's not already
+                  const promptCreatedAt =
+                    prompt.createdAt instanceof Date
+                      ? prompt.createdAt
+                      : new Date(prompt.createdAt);
+
+                  const relatedActions = actions.filter((action) => {
+                    const actionCreatedAt =
+                      action.createdAt instanceof Date
+                        ? action.createdAt
+                        : new Date(action.createdAt);
+
+                    return (
+                      actionCreatedAt >= promptCreatedAt &&
+                      actionCreatedAt <=
+                        new Date(promptCreatedAt.getTime() + 5 * 60 * 1000)
+                    );
+                  });
+
+                  return (
+                    <div key={prompt.id} className="space-y-2">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0">
+                          <Image
+                            src={user?.imageUrl || "/placeholder.svg"}
+                            width={32}
+                            height={32}
+                            alt="Profile picture"
+                            className="rounded-full"
+                            priority={true}
+                          />
+                        </div>
+                        <div className="flex-grow py-2 px-3 rounded-lg bg-secondary text-secondary-foreground">
+                          {prompt.content}
+                        </div>
+                      </div>
+
+                      {relatedActions.length > 0 && (
+                        <div className="space-y-2 ml-10">
+                          {relatedActions.map((action) => (
+                            <div
+                              key={action.id}
+                              className="py-2 px-3 rounded-lg bg-muted text-muted-foreground"
+                            >
+                              {action.content}
                             </div>
-                        ))}
+                          ))}
+                        </div>
+                      )}
                     </div>
-               </div>
-                <div className="flex gap-2 pb-8">
-                    <Input 
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Type a message" 
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                               submitPrompt(); 
-                            }
-                        }}
-                    />
-                    <Button onClick={submitPrompt}>
-                        <Send />
-                    </Button>
-                </div>
+                  );
+                })}
             </div>
-            <div className="md:w-3/4 p-8">
-                <iframe src={`${WORKER_URL}/`} width={"100%"} height={"100%"} title="Project Worker" className="rounded-lg" />
+            <div className="flex gap-2 p-3 border-t">
+              <Input
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-grow"
+                onKeyDown={handleKeyDown}
+              />
+              <Button
+                onClick={submitPrompt}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
             </div>
+          </div>
         </div>
-        <ProjectsDrawer />
+        <div className="hidden md:block md:w-3/4 p-4">
+          <iframe
+            src={`${WORKER_URL}/`}
+            className="w-full h-full rounded-lg shadow-md"
+            title="Project Worker"
+          />
+        </div>
+      </div>
+      <ProjectsDrawer />
     </div>
+  );
 }
