@@ -1,13 +1,10 @@
 @import "tailwindcss";
 
-@plugin "tailwindcss-animate";
-
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-	--font-space-grotesk: var(--font-space-grotesk);
+  --font-*: initial;
+  --font-sans: "figtree";
 }
 
 :root {
@@ -124,6 +121,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }

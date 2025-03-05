@@ -1,37 +1,49 @@
+'use client';
+
 import {
-    SignInButton,
-    SignUpButton,
-    SignedIn,
-    SignedOut,
-    UserButton,
-} from "@clerk/nextjs";
-import { Button } from "./ui/button";
-import Link from "next/link";
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from '@clerk/nextjs'
+import { Header } from '@/components/Header'
+import { motion } from 'motion/react'
+import { containerVariants, itemVariants } from '@/lib/animation-variants' 
 
 export function Appbar() {
-	return (
-    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-11/12 md:w-5/6 mx-auto flex justify-between border rounded-lg items-center bg-background px-4 py-2 md:py-3 md:px-6">
-      {/* <h1 className="font-space-grotesk font-bold text-xl" >Bolty</h1> */}
-      <Link href="/" className="cursor-pointer font-space-grotesk font-bold text-xl">
-        Bolty
-      </Link>
-      <div className="flex justify-center items-center gap-2">
-      <SignedOut>
-          <SignInButton mode="modal">
-            <Button variant="ghost" size="sm" className="cursor-pointer">
-              Sign in
-            </Button>
+  return (
+    <motion.div 
+    variants={containerVariants}
+     initial="hidden"
+     animate="visible"
+    className="flex items-center mt-4 justify-between">
+      <Header />
+
+      <motion.div variants={itemVariants} className="flex gap-2 items-center justify-center">
+        <SignedOut>
+          <SignInButton>
+            <button
+              className="border border-zinc-800 hover:bg-zinc-600/10 bg-zinc-900 cursor-pointer px-4 py-2 rounded-3xl"
+            >
+              Sign In
+            </button>
           </SignInButton>
-          <SignUpButton mode="modal">
-            <Button variant="default" size="sm" className="cursor-pointer">
-              Sign up
-            </Button>
+
+          <SignUpButton>
+            <button
+              className="border border-zinc-800 hover:bg-zinc-600/10 bg-zinc-900 cursor-pointer px-4 py-2 rounded-3xl"
+            >
+              Sign Up
+            </button>
           </SignUpButton>
-      </SignedOut>
-      <SignedIn>
+        </SignedOut>
+
+        <SignedIn>
           <UserButton />
-      </SignedIn>
-      </div>
-    </div>
+        </SignedIn>
+      </motion.div>
+    </motion.div>
   );
 }
+
