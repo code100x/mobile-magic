@@ -50,3 +50,21 @@ export async function onShellCommand(shellCommand: string, projectId: string) {
         });
     }
 }
+
+export function onPromptStart() {
+    ws.send(JSON.stringify({
+        event: "admin",
+        data: {
+            type: "prompt-start"
+        }
+    }))
+}
+
+export function onPromptEnd() {
+    ws.send(JSON.stringify({
+        event: "admin",
+        data: {
+            type: "prompt-end"
+        }
+    }))
+}

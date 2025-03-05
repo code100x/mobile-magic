@@ -1,21 +1,11 @@
 export type MessagePayload = {
     event: "subscribe";
-    data: {
-        roomId: string;
-    };
-} | {
-    event: "unsubscribe";
-    data: {
-        roomId: string;
-    };
+    data?: null;
 } | {
     event: "admin";
     data: {
-        roomId: string;
-        message: {
-            type: "command" | "update-file"
-            content: string;
-            path?: string;
-        };
+        type: "command" | "update-file"
+        content: string;
+        path?: string;
     };
 }

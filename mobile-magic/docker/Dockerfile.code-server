@@ -19,5 +19,9 @@ RUN code-server --install-extension bolty-listener-0.0.1.vsix
 RUN git clone https://github.com/code100x/base-react-native-expo.git /tmp/bolty-worker
 RUN cd /tmp/bolty-worker && npm install
 
+RUN sudo chown -R coder /tmp/bolty-worker
+
+
+
 # Start code-server on container launch
 CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080", "/tmp/bolty-worker"]

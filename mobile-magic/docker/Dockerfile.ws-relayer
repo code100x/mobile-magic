@@ -2,7 +2,7 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
-COPY ./apps/worker/ ./apps/worker
+COPY ./apps/ws-relayer/ ./apps/ws-relayer
 COPY ./packages/ ./packages
 COPY package* .
 COPY turbo.json .
