@@ -4,7 +4,6 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { GitHubPanel } from '@/components/GitHubPanel';
 
 export default function HomeScreen() {
   return (
@@ -20,15 +19,6 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
-      
-      <ThemedView style={styles.stepContainer}>
-        <GitHubPanel 
-          repoName="hkirat/task-magic-scheduler-95"
-          branch="main"
-          cloneUrl="https://github.com/hkirat/task-magic-scheduler-95.git"
-        />
-      </ThemedView>
-
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
