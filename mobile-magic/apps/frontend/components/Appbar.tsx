@@ -13,6 +13,8 @@ import { containerVariants, itemVariants } from '@/lib/animation-variants'
 import { ThemeButton } from '@/components/theme-button' 
 
 export function Appbar() {
+  const repoUrl = `https://github.com/VarshanMaj1/mobile-magic`;
+  
   return (
     <motion.div 
     	variants={containerVariants}
@@ -20,7 +22,7 @@ export function Appbar() {
      	animate="visible"
     	className="flex items-center mt-4 justify-between"
     >
-      <Header />
+      <Header repoUrl={repoUrl} />
 
       <motion.div variants={itemVariants} className="flex gap-2 items-center justify-center">
 	<ThemeButton />
@@ -50,4 +52,3 @@ export function Appbar() {
     </motion.div>
   );
 }
-
