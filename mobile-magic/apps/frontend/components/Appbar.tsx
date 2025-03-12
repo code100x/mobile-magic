@@ -11,6 +11,7 @@ import { Header } from '@/components/Header'
 import { motion } from 'motion/react'
 import { containerVariants, itemVariants } from '@/lib/animation-variants' 
 import { ThemeButton } from '@/components/theme-button' 
+import GitHubRepoCard from './Githubcard'
 
 export function Appbar() {
   return (
