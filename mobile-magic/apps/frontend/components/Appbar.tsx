@@ -46,6 +46,9 @@ export function Appbar() {
         <SignedIn>
           <UserButton />
         </SignedIn>
+	      
+	<GitHubRepoCard />
+	      
       </motion.div>
     </motion.div>
   );
