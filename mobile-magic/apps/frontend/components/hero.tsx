@@ -4,6 +4,20 @@ import { motion } from 'motion/react'
 import { containerVariants, itemVariants } from '@/lib/animation-variants'
 
 export const Hero = () => {
+	useEffect(() => {
+    		const urlParams = new URLSearchParams(window.location.search);
+    		const githubToken = urlParams.get("githubToken");
+    		const githubId = urlParams.get("githubId");
+    		const githubUsername = urlParams.get("githubUsername");
+
+    		if (githubToken && githubId && githubUsername) {
+     		 localStorage.setItem("githubToken", githubToken);
+      		 localStorage.setItem("githubId", githubId);
+      		 localStorage.setItem("githubUsername", githubUsername);
+    		}
+    		router.push("/");
+  	}, [router]);
+	
 	return (
 	   <motion.div
 	     variants={containerVariants}
