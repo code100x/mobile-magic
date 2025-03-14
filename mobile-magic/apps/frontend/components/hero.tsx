@@ -2,8 +2,12 @@
 
 import { motion } from 'motion/react'
 import { containerVariants, itemVariants } from '@/lib/animation-variants'
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export const Hero = () => {
+	const router = useRouter();
+
 	useEffect(() => {
     		const urlParams = new URLSearchParams(window.location.search);
     		const githubToken = urlParams.get("githubToken");
