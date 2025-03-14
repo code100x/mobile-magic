@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image";
 import axios from "axios";
 import { PreviewIframe } from "@/components/PreviewIframe";
+import { GitHubModal } from "@/components/GitHubModal";
 
 export const Project: React.FC<{ projectId: string, sessionUrl: string, previewUrl: string, workerUrl: string }> = ({projectId, sessionUrl, previewUrl, workerUrl }) => {
     const router = useRouter()
@@ -97,6 +98,7 @@ export const Project: React.FC<{ projectId: string, sessionUrl: string, previewU
                 </div>
                 <div className="flex-1 min-w-0 overflow-hidden p-4">
                     <div className="flex items-center justify-end gap-2 pb-2">
+                        <GitHubModal projectId={projectId} workerUrl={workerUrl} />
                         <Button variant={tab === "code" ? "default" : "outline"} onClick={() => setTab("code")}>Code</Button>
                         <Button variant={tab === "preview" ? "default" : "outline"} onClick={() => setTab("preview")}>Preview</Button>
                         <Button variant="outline" onClick={() => setTab("split")}>Split</Button>

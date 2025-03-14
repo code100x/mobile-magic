@@ -1864,3 +1864,9 @@ ${ARTIFACT_INFO}
 
 ${projectType === "NEXTJS" ? NEXT_JS_ARTIFACT_INFO : projectType === "REACT_NATIVE" ? REACT_NATIVE_ARTIFACT_INFO : REACT_ARTIFACT_INFO}
 `;
+
+export const systemPromptForRepoName = () => `Given prompt will be a React Application (or) React Native Application (or) Next.js Application.
+Depending on the prompt, give a good, meaningful and suitable "GitHub Repository Name" for that application. ** Only just give the repository name as the output **
+Example:
+User Prompt: Create a todo application.
+Response: Todo App`;

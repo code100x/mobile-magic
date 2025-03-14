@@ -17,7 +17,7 @@ Bun.serve({
       return new Response("Upgrade failed", { status: 500 });
     },
     websocket: {
-        message(ws, message) {
+        message(ws: any, message: any) {
             const { event, data }: MessagePayload = JSON.parse(message.toString());
             if (event === "subscribe") {
                 SUBSCRIPTIONS.push(ws);
@@ -33,14 +33,14 @@ Bun.serve({
                 }
             } else if (event === "api_subscribe") {
                 API_SUBSCRIPTIONS.push(ws);
-            } else if (event === "vscode") {
+            } else if (event === "vscode_diff") {
                 API_SUBSCRIPTIONS.forEach(ws => ws.send(JSON.stringify(data)));
             }
         },
-        open(ws) {
+        open(ws: any) {
             console.log("open");
         },
-        close(ws) {
+        close(ws: any) {
             console.log("close");
         },
         
