@@ -127,10 +127,13 @@ async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "RE
     const pods = await listPods();
     const podExists = pods.find(pod => pod === projectId);
     if (!podExists) {
+        console.log("Pod does not exist, creating pod");
         await createPod(projectId);
     }
 
+    console.log("Pod exists, checking if it is ready");
     await checkPodIsReady(projectId);
+    console.log("Pod is ready, moving project to pod");
 
     const exec = new k8s.Exec(kc);
     let stdout = "";
@@ -163,10 +166,11 @@ async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "RE
     console.log(stdout);
     console.log(stderr);
 
-    console.log(`Assigned project ${projectId} to pod ${pod}`);
+    console.log(`Assigned project ${projectId} to pod ${projectId}`);
 }
 
 app.get("/worker/:projectId", async (req, res) => {
+    console.log("Received request to assign project to pod for project", req.params.projectId);
     const { projectId } = req.params;
     const project = await prismaClient.project.findUnique({
         where: {
@@ -179,7 +183,9 @@ app.get("/worker/:projectId", async (req, res) => {
         return;
     }
 
+    console.log("Project found, assigning to pod");
     await assignPodToProject(projectId, "REACT"); // project.type);
+    console.log("Pod assigned, sending response");
 
     res.json({ 
         sessionUrl: `https://session-${projectId}.${DOMAIN}`, 

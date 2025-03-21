@@ -1,4 +1,4 @@
-name: Docker Publish Frontend
+name: Docker Orchestrator
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and push frontend
+      - name: Build and push orchestrator
         uses: docker/build-push-action@v5
         with:
           context: ./mobile-magic
