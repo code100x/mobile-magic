@@ -37,7 +37,7 @@ spec:
             items:
               - key: KUBECONFIG
                 path: config
-      
+
 ---
 apiVersion: v1
 kind: Service

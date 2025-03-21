@@ -2,11 +2,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import express from 'express';
 import { KubeConfig, CoreV1Api } from "@kubernetes/client-node";
 import * as k8s from "@kubernetes/client-node";
-import { getRandomName } from "./names";
 import cors from 'cors';
 import { Writable } from 'stream';
-import { addNewPod, addProjectToPod, redisClient, removePod } from './redis';
-import { getAllPods } from './redis';
 import { DOMAIN } from './config';
 import { prismaClient } from "db/client";
 
@@ -35,8 +32,7 @@ async function listPods(): Promise<string[]> {
     return res.items.filter(pod => pod.status?.phase === 'Running' || pod.status?.phase === 'Pending').filter(pod => pod.metadata?.name).map((pod) => pod.metadata?.name as string);
 }
 
-async function createPod() {
-    const name = getRandomName();
+async function createPod(name: string) {
 
     await k8sApi.createNamespacedPod({ namespace: 'user-apps', body: {
         metadata: {
@@ -111,19 +107,37 @@ async function createPod() {
     }});
 }
 
-async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "REACT_NATIVE" | "REACT") {
-    const pods = await getAllPods();
-    const pod = Object.keys(pods).find((pod) =>  pods[pod] === "empty");
-    if (!pod) {
-        await createPod();
-        return assignPodToProject(projectId, projectType);
+async function checkPodIsReady(name: string) {
+    let attempts = 0;
+    while (true) {
+        const pod = await k8sApi.readNamespacedPod({ namespace: 'user-apps', name });
+        if (pod.status?.phase === 'Running') {
+            return;
+        }
+        if (attempts > 10) {
+            throw new Error("Pod is not ready");
+        }
+        //TODO: Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        attempts++;
     }
+}
+
+async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "REACT_NATIVE" | "REACT") {
+    const pods = await listPods();
+    const podExists = pods.find(pod => pod === projectId);
+    if (!podExists) {
+        await createPod(projectId);
+    }
+
+    await checkPodIsReady(projectId);
 
     const exec = new k8s.Exec(kc);
     let stdout = "";
     let stderr = "";
     console.log(`mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`);
-    exec.exec("user-apps", pod, "code-server", ["/bin/sh", "-c", `mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`], 
+
+    exec.exec("user-apps", projectId, "code-server", ["/bin/sh", "-c", `mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`], 
         new Writable({
             write: (chunk: Buffer, encoding: BufferEncoding, callback: () => void) => {
                 stdout += chunk;
@@ -149,9 +163,7 @@ async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "RE
     console.log(stdout);
     console.log(stderr);
 
-    addProjectToPod(projectId, pod);
     console.log(`Assigned project ${projectId} to pod ${pod}`);
-    return pod;
 }
 
 app.get("/worker/:projectId", async (req, res) => {
@@ -167,51 +179,15 @@ app.get("/worker/:projectId", async (req, res) => {
         return;
     }
 
-    const pod = await assignPodToProject(projectId, "REACT"); // project.type);
+    await assignPodToProject(projectId, "REACT"); // project.type);
 
     res.json({ 
-        sessionUrl: `https://session-${pod}.${DOMAIN}`, 
-        previewUrl: `https://preview-${pod}.${DOMAIN}`, 
-        workerUrl: `https://worker-${pod}.${DOMAIN}` 
+        sessionUrl: `https://session-${projectId}.${DOMAIN}`, 
+        previewUrl: `https://preview-${projectId}.${DOMAIN}`, 
+        workerUrl: `https://worker-${projectId}.${DOMAIN}` 
     });
 });
 
 app.listen(7001, () => {
     console.log("Server is running on port 7001");
-});
-
-async function updateFromK8s() {
-    const pods = await getAllPods();
-    const k8sPods = await listPods();
-    const k8sPodsSet = new Set(k8sPods);
-    const redisPodsSet = new Set(Object.keys(pods));
-    const podsToRemove = Array.from(redisPodsSet).filter((pod) => !k8sPodsSet.has(pod));
-    for (const pod of podsToRemove) {
-        await removePod(pod);
-    }
-
-    const podsToAdd = Array.from(k8sPodsSet).filter((pod) => !redisPodsSet.has(pod));
-    for (const pod of podsToAdd) {
-        await addNewPod(pod);
-    }
-
-    const podsInRedis = await getAllPods();
-    const emptyPods = Object.keys(podsInRedis).filter((pod) => podsInRedis[pod] === "empty");
-
-    if (emptyPods.length < EMPTY_POD_BUFFER_SIZE) {
-        console.log(`Creating ${EMPTY_POD_BUFFER_SIZE - emptyPods.length} pods`);
-        for (let i = 0; i < EMPTY_POD_BUFFER_SIZE - emptyPods.length; i++) {
-            await createPod();
-        }
-    }
-}
-
-// when it starts
-redisClient.on("connect", () => {
-    console.log("Redis connected");
-    setInterval(async () => {
-        updateFromK8s()
-    }, 1000 * 30);
-
-    updateFromK8s()
 });

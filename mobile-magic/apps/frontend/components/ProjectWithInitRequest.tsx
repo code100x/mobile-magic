@@ -36,7 +36,7 @@ export default function ProjectWithInitRequest({
 					},
 				},
 			);
-			window.location.href = `/project/${projectId}`;
+			// window.location.href = `/project/${projectId}`;
 		})()	
 	}, [projectId, initPrompt, workerUrl, getToken, router]);
 
