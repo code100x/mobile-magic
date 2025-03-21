@@ -6,7 +6,9 @@ export function PreviewIframe({ url }: { url: string }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
+        console.log("interval started")
+        const timer = setInterval(() => {
+            console.log(`Checking if ${url} is ready`);
             fetch(url)
                 .then(response => response.ok)
                 .then(ok => {
@@ -17,11 +19,11 @@ export function PreviewIframe({ url }: { url: string }) {
                     }
                 })
         }, 1000);
-        return () => clearTimeout(timer);
+        return () => clearInterval(timer);
     }, [url]);
 
     if (isLoading) {
-        return <div className="w-full h-full rounded-lg flex items-center justify-center">Loading...</div>;
+        return <div className="w-full h-full rounded-lg flex items-center justify-center"></div>;
     }
     
     return (

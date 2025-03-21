@@ -34,7 +34,7 @@ export function usePrompts(projectId: string) {
             });
         }
         getPrompts();
-        let interval = setInterval(getPrompts, 1000);
+        let interval = setInterval(getPrompts, 3 * 1000);
         return () => clearInterval(interval);
     }, []);
 

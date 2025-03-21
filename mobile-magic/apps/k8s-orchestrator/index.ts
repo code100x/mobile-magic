@@ -65,6 +65,14 @@ async function createPod(name: string) {
                             key: "ANTHROPIC_API_KEY",
                         }
                     }
+                }, {
+                    name: "DATABASE_URL",
+                    valueFrom: {
+                        secretKeyRef: {
+                            name: "worker-secret",
+                            key: "DATABASE_URL",
+                        }
+                    }
                 }]
             }],
         },
