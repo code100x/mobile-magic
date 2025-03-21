@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 100xdevs/antidevs-frontend:6fb93cea8dda69f391142da3ff52e7ab9518f408
+          image: 100xdevs/antidevs-frontend:fb6e7ff8a26eaf556750592598a0ddb7d6bcc943
           ports:
             - containerPort: 3000
           env:
