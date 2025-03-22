@@ -11,6 +11,7 @@ import { Header } from '@/components/Header'
 import { motion } from 'motion/react'
 import { containerVariants, itemVariants } from '@/lib/animation-variants' 
 import { ThemeButton } from '@/components/theme-button' 
+import ConnetToGithub  from '@/components/Github/ConnectToGithub'
 
 export function Appbar() {
   return (
@@ -42,6 +43,8 @@ export function Appbar() {
             </button>
           </SignUpButton>
         </SignedOut>
+
+        <ConnetToGithub/>
 
         <SignedIn>
           <UserButton />
