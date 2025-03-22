@@ -29,6 +29,7 @@ model Project {
   actions     Action[]
   type        ProjectType @default(NEXTJS)
   userId      String
+  repoUrl     String?
 }
 
 enum ProjectType {
@@ -57,6 +58,13 @@ model Action {
   promptId  String
   projectId String
   prompt    Prompt   @relation(fields: [promptId], references: [id])
+}
+
+model GitHubUser {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  accessToken     String   @unique
+  username        String
 }
 
 enum PromptType {
