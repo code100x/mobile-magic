@@ -1,0 +1,20 @@
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: 'primary-backend'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - app
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: primary-backend
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: $1:9090
+          - source_labels: [__meta_kubernetes_pod_name]
+            target_label: pod
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace

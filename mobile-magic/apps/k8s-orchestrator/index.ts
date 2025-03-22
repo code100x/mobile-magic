@@ -6,6 +6,15 @@ import cors from 'cors';
 import { Writable } from 'stream';
 import { DOMAIN } from './config';
 import { prismaClient } from "db/client";
+import promClient from 'prom-client';
+
+const containerCreateBucket = new promClient.Histogram({
+    name: 'container_create_bucket',
+    help: 'Number of times a container was created',
+    labelNames: ['type'],
+    buckets: [50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000],
+});
+
 
 const kc = new KubeConfig();
 const app = express();
@@ -16,8 +25,6 @@ const PROJECT_TYPE_TO_BASE_FOLDER = {
     REACT_NATIVE: "/tmp/mobile-app"
 }
 
-const POD_EXPIRY = 1000 * 60 * 5; // 5 minutes
-const EMPTY_POD_BUFFER_SIZE = 3;
 kc.loadFromDefault();
 
 app.use(cors());
@@ -192,14 +199,21 @@ app.get("/worker/:projectId", async (req, res) => {
     }
 
     console.log("Project found, assigning to pod");
-    await assignPodToProject(projectId, "REACT"); // project.type);
+    const startTime = Date.now();
+    await assignPodToProject(projectId, "REACT");
     console.log("Pod assigned, sending response");
+    containerCreateBucket.observe({ type: project.type }, Date.now() - startTime);
 
     res.json({ 
         sessionUrl: `https://session-${projectId}.${DOMAIN}`, 
         previewUrl: `https://preview-${projectId}.${DOMAIN}`, 
         workerUrl: `https://worker-${projectId}.${DOMAIN}` 
     });
+});
+
+app.get("/metrics", async (req, res) => {
+    res.setHeader('Content-Type', promClient.register.contentType);
+    res.end(await promClient.register.metrics());
 });
 
 app.listen(7001, () => {

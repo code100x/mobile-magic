@@ -2,8 +2,7 @@ import { prismaClient } from "db/client";
 import express from "express";
 import cors from "cors";
 import { authMiddleware } from "common/middleware";
-const promMid = require('express-prometheus-middleware')
-
+import promMid from 'express-prometheus-middleware'
 
 const app = express();
 

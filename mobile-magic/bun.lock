@@ -59,6 +59,7 @@
         "cors": "^2.8.5",
         "db": "*",
         "express": "^4.21.2",
+        "prom-client": "^15.1.3",
         "redis": "^4.7.0",
       },
       "devDependencies": {
@@ -73,6 +74,7 @@
       "dependencies": {
         "@types/cors": "^2.8.17",
         "@types/express": "^5.0.0",
+        "@types/express-prometheus-middleware": "^1.2.3",
         "@types/jsonwebtoken": "^9.0.9",
         "common": "*",
         "cors": "^2.8.5",
@@ -677,6 +679,8 @@
     "@types/estree": ["@types/estree@1.0.6", "", {}, "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw=="],
 
     "@types/express": ["@types/express@5.0.0", "", { "dependencies": { "@types/body-parser": "*", "@types/express-serve-static-core": "^5.0.0", "@types/qs": "*", "@types/serve-static": "*" } }, "sha512-DvZriSMehGHL1ZNLzi6MidnsDhUZM/x2pRdDIKdwbUNqqwHxMlRdkxtn6/EPKyqKpHqTl/4nRZsRNLpZxZRpPQ=="],
+
+    "@types/express-prometheus-middleware": ["@types/express-prometheus-middleware@1.2.3", "", { "dependencies": { "@types/express": "*" } }, "sha512-3B+/27E/pxkZOzTWHqSQOhi5IctzoEyX6F1izBxAjiC5oe6tHLDy0kNQAj31SGR3wjxfvH1dgZi9fzmKX90OBw=="],
 
     "@types/express-serve-static-core": ["@types/express-serve-static-core@5.0.6", "", { "dependencies": { "@types/node": "*", "@types/qs": "*", "@types/range-parser": "*", "@types/send": "*" } }, "sha512-3xhRnjJPkULekpSzgtoNYYcTWgEZkp4myc+Saevii5JPnHNvHMRlBSHDbs7Bh1iPPoVTERHEZXyhyLbMEsExsA=="],
 

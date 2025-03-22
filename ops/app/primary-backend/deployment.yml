@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: primary-backend
-          image: 100xdevs/antidevs-primary-backend:latest
+          image: 100xdevs/antidevs-primary-backend:7eab897aab7517fde2625afe89e265e175f9b678
           ports:
             - containerPort: 9090
           env:
