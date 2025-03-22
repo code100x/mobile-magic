@@ -13,9 +13,11 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.9",
+    "common": "*",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "express-prometheus-middleware": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
-    "common": "*"
+    "prom-client": "^15.1.3"
   }
 }
