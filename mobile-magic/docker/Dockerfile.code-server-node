@@ -1,0 +1,52 @@
+FROM codercom/code-server:4.96.4
+
+# build arg for  projectType
+ARG projectType
+
+USER root
+RUN apt-get update \
+    && apt-get install -y curl \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Revert to the code-server default user
+USER coder
+# Expose code-server's default port
+EXPOSE 8080
+
+# Cloning the repository and copy only the specified project based on projectType
+RUN git clone https://github.com/code100x/mobile-magic.git /tmp/bolty-worker \
+    && if [ "$projectType" = "mobile" ]; then \
+           cp -r /tmp/bolty-worker/expo-base-app /app && rm -rf /tmp/bolty-worker/* && mv /app /tmp/bolty-worker/expo-base-app; \
+       elif [ "$projectType" = "nextjs" ]; then \
+           cp -r /tmp/bolty-worker/nextjs-base-app /app && rm -rf /tmp/bolty-worker/* && mv /app /tmp/bolty-worker/nextjs-base-app; \
+       elif [ "$projectType" = "react" ]; then \
+           cp -r /tmp/bolty-worker/react-base-app /app && rm -rf /tmp/bolty-worker/* && mv /app /tmp/bolty-worker/react-base-app; \
+       else \
+           echo "Invalid projectType."; exit 1; \
+       fi \
+    && mv /tmp/bolty-worker/* /app \
+    && rm -rf /tmp/bolty-worker
+
+# install dependencies only for the selected project
+WORKDIR /app
+RUN npm install
+
+# downloading and installing extension]
+RUN wget https://github.com/code100x/mobile-magic/raw/refs/heads/main/ext/bolty-listener-0.0.1.vsix
+RUN code-server --install-extension bolty-listener-0.0.1.vsix
+
+USER root
+RUN chown -R coder /app
+USER coder
+
+
+# Set default theme to dark
+RUN mkdir -p /home/coder/.local/share/code-server/User
+RUN echo '{"workbench.colorTheme": "Dark+", "workbench.preferredDarkColorTheme": "Dark+"}' > /home/coder/.local/share/code-server/User/settings.json
+
+
+# Start code-server on container launch
+CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080", "--disable-telemetry", "/app"]

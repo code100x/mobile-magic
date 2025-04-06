@@ -1,29 +1,33 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-import express from 'express';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+import express from "express";
 import { KubeConfig, CoreV1Api } from "@kubernetes/client-node";
 import * as k8s from "@kubernetes/client-node";
-import cors from 'cors';
-import { Writable } from 'stream';
-import { DOMAIN } from './config';
-import { prismaClient } from "db/client";
-import promClient from 'prom-client';
+import cors from "cors";
+import { Writable } from "stream";
+import { DOMAIN } from "./config";
+import { prismaClient } from "db/client";
+import promClient from "prom-client";
+import AWS from "aws-sdk";
 
 const containerCreateBucket = new promClient.Histogram({
-    name: 'container_create_bucket',
-    help: 'Number of times a container was created',
-    labelNames: ['type'],
-    buckets: [50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000],
+  name: "container_create_bucket",
+  help: "Number of times a container was created",
+  labelNames: ["type"],
+  buckets: [50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000],
 });
-
 
 const kc = new KubeConfig();
 const app = express();
 
+const s3 = new AWS.S3({
+  region: "",
+});
+
 const PROJECT_TYPE_TO_BASE_FOLDER = {
-    NEXTJS: "/tmp/next-app",
-    REACT: "/tmp/react-app",
-    REACT_NATIVE: "/tmp/mobile-app"
-}
+  NEXTJS: "/tmp/next-app",
+  REACT: "/tmp/react-app",
+  REACT_NATIVE: "/tmp/mobile-app",
+};
 
 kc.loadFromDefault();
 
@@ -34,188 +38,341 @@ const currentContext = kc.getCurrentContext();
 const cluster = kc.getCluster(currentContext);
 
 async function listPods(): Promise<string[]> {
-    const res = await k8sApi.listNamespacedPod({ namespace: 'user-apps' });
-    console.log(res.items.map((pod) => pod.status?.phase));
-    return res.items.filter(pod => pod.status?.phase === 'Running' || pod.status?.phase === 'Pending').filter(pod => pod.metadata?.name).map((pod) => pod.metadata?.name as string);
+  const res = await k8sApi.listNamespacedPod({ namespace: "user-apps" });
+  console.log(res.items.map((pod) => pod.status?.phase));
+  return res.items
+    .filter(
+      (pod) =>
+        pod.status?.phase === "Running" || pod.status?.phase === "Pending",
+    )
+    .filter((pod) => pod.metadata?.name)
+    .map((pod) => pod.metadata?.name as string);
 }
 
-async function createPod(name: string) {
+enum ProjectType {
+  REACT_NATIVE = "REACT_NATIVE",
+  REACT = "REACT",
+  NEXTJS = "NEXTJS",
+}
 
-    await k8sApi.createNamespacedPod({ namespace: 'user-apps', body: {
-        metadata: {
-            name: name,
-            labels: {
-                app: name,
-            },
-        },
-        spec: {
-            containers: [{
-                name: "code-server",
-                image: '100xdevs/code-server-base:v3',
-                ports: [{ containerPort: 8080 }, { containerPort: 8081 }],
-            }, {
-                name: "ws-relayer",
-                image: "100xdevs/antidevs-ws-relayer:ff488d08f7a2bf15c77d9787352a79468c14fc3f",
-                ports: [{ containerPort: 9093 }],
-            }, {
-                name: "worker",
-                image: "100xdevs/antidevs-worker:ff488d08f7a2bf15c77d9787352a79468c14fc3f",
-                ports: [{ containerPort: 9091 }],
-                env: [{
-                    name: "WS_RELAYER_URL",
-                    value: `ws://localhost:9091`,
-                }, {
-                    name: "ANTHROPIC_API_KEY",
-                    valueFrom: {
-                        secretKeyRef: {
-                            name: "worker-secret",
-                            key: "ANTHROPIC_API_KEY",
-                        }
-                    }
-                }, {
-                    name: "DATABASE_URL",
-                    valueFrom: {
-                        secretKeyRef: {
-                            name: "worker-secret",
-                            key: "DATABASE_URL",
-                        }
-                    }
-                }]
-            }],
-        },
-    }});
+const PROJECT_TYPE_TO_BASE_IMAGE: Record<ProjectType, string> = {
+  [ProjectType.NEXTJS]: "100xdevs/code-server-nextjs:v3", //100xdevs/code-server-base:v3
+  [ProjectType.REACT]: "100xdevs/code-server-react:v3",
+  [ProjectType.REACT_NATIVE]: "100xdevs/code-server-reactnative-expo:v3",
+};
 
-    await k8sApi.createNamespacedService({ namespace: 'user-apps', body: {
-        metadata: {
-            name: `session-${name}`,
-        },
-        spec: {
-            selector: {
-                app: name,
-            },
-            ports: [{ port: 8080, targetPort: 8080, protocol: 'TCP', name: 'session' }],
-        },
-    }});
+const RUNTIME_TO_BASE_IMAGE: Record<string, string> = {
+  nodejs: "100xdevs/code-server-nodejs:v1", // Base image with Node.js only
+  rust: "100xdevs/code-server-rust:v1", // Base image with Rust only
+  nodejs_rust: "100xdevs/code-server-nodejs-rust:v1", // Base image with Node.js and Rust
+};
 
-    await k8sApi.createNamespacedService({ namespace: 'user-apps', body: {
-        metadata: {
-            name: `preview-${name}`,
-        },
-        spec: {
-            selector: {
-                app: name,
-            },
-            ports: [{ port: 8080, targetPort: 8081, protocol: 'TCP', name: 'preview' }],
-        },
-    }});
+//determing runtime based on project type
+function getRuntimeForProjectType(projectType: ProjectType): string {
+  switch (projectType) {
+    case ProjectType.NEXTJS:
+    case ProjectType.REACT:
+      return "nodejs";
+    case ProjectType.REACT_NATIVE:
+      return "nodejs";
+    default:
+      return "nodejs"; // Default to Node.js
+  }
+}
 
-    await k8sApi.createNamespacedService({ namespace: 'user-apps', body: {
-        metadata: {
-            name: `worker-${name}`,
+async function createPod(name: string, image: string) {
+  await k8sApi.createNamespacedPod({
+    namespace: "user-apps",
+    body: {
+      metadata: {
+        name: name,
+        labels: {
+          app: name,
         },
-        spec: {
-            selector: {
-                app: name,
-            },
-            ports: [{ port: 8080, targetPort: 9091, protocol: 'TCP', name: 'preview' }],
+      },
+      spec: {
+        containers: [
+          {
+            name: "code-server",
+            image: image, //here  adding dynamic image //100xdevs/code-server-base:v3
+            ports: [{ containerPort: 8080 }, { containerPort: 8081 }],
+          },
+          {
+            name: "ws-relayer",
+            image:
+              "100xdevs/antidevs-ws-relayer:ff488d08f7a2bf15c77d9787352a79468c14fc3f",
+            ports: [{ containerPort: 9093 }],
+          },
+          {
+            name: "worker",
+            image:
+              "100xdevs/antidevs-worker:ff488d08f7a2bf15c77d9787352a79468c14fc3f",
+            ports: [{ containerPort: 9091 }],
+            env: [
+              {
+                name: "WS_RELAYER_URL",
+                value: `ws://localhost:9091`,
+              },
+              {
+                name: "ANTHROPIC_API_KEY",
+                valueFrom: {
+                  secretKeyRef: {
+                    name: "worker-secret",
+                    key: "ANTHROPIC_API_KEY",
+                  },
+                },
+              },
+              {
+                name: "DATABASE_URL",
+                valueFrom: {
+                  secretKeyRef: {
+                    name: "worker-secret",
+                    key: "DATABASE_URL",
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  });
+
+  await k8sApi.createNamespacedService({
+    namespace: "user-apps",
+    body: {
+      metadata: {
+        name: `session-${name}`,
+      },
+      spec: {
+        selector: {
+          app: name,
         },
-    }});
+        ports: [
+          { port: 8080, targetPort: 8080, protocol: "TCP", name: "session" },
+        ],
+      },
+    },
+  });
+
+  await k8sApi.createNamespacedService({
+    namespace: "user-apps",
+    body: {
+      metadata: {
+        name: `preview-${name}`,
+      },
+      spec: {
+        selector: {
+          app: name,
+        },
+        ports: [
+          { port: 8080, targetPort: 8081, protocol: "TCP", name: "preview" },
+        ],
+      },
+    },
+  });
+
+  await k8sApi.createNamespacedService({
+    namespace: "user-apps",
+    body: {
+      metadata: {
+        name: `worker-${name}`,
+      },
+      spec: {
+        selector: {
+          app: name,
+        },
+        ports: [
+          { port: 8080, targetPort: 9091, protocol: "TCP", name: "preview" },
+        ],
+      },
+    },
+  });
 }
 
 async function checkPodIsReady(name: string) {
-    let attempts = 0;
-    while (true) {
-        const pod = await k8sApi.readNamespacedPod({ namespace: 'user-apps', name });
-        if (pod.status?.phase === 'Running') {
-            return;
-        }
-        if (attempts > 10) {
-            throw new Error("Pod is not ready");
-        }
-        //TODO: Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        attempts++;
+  let attempts = 0;
+  while (true) {
+    const pod = await k8sApi.readNamespacedPod({
+      namespace: "user-apps",
+      name,
+    });
+    if (pod.status?.phase === "Running") {
+      return;
     }
+    if (attempts > 10) {
+      throw new Error("Pod is not ready");
+    }
+    //TODO: Exponential backoff
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    attempts++;
+  }
 }
 
-async function assignPodToProject(projectId: string, projectType: "NEXTJS" | "REACT_NATIVE" | "REACT") {
-    const pods = await listPods();
-    const podExists = pods.find(pod => pod === projectId);
-    if (!podExists) {
-        console.log("Pod does not exist, creating pod");
-        await createPod(projectId);
-    }
+async function assignPodToProject(
+  projectId: string,
+  projectType: ProjectType,
+  isOnS3: boolean,
+) {
+  const pods = await listPods();
+  const podExists = pods.find((pod) => pod === projectId);
 
-    console.log("Pod exists, checking if it is ready");
-    await checkPodIsReady(projectId);
-    console.log("Pod is ready, moving project to pod");
+  //determing base image
+  const image = isOnS3
+    ? RUNTIME_TO_BASE_IMAGE[getRuntimeForProjectType(projectType)]
+    : PROJECT_TYPE_TO_BASE_IMAGE[projectType];
 
-    const exec = new k8s.Exec(kc);
-    let stdout = "";
-    let stderr = "";
+  if (!podExists) {
+    console.log("Pod does not exist, creating pod");
+    await createPod(projectId, image);
+  }
+
+  console.log("Pod exists, checking if it is ready");
+  await checkPodIsReady(projectId);
+  console.log("Pod is ready, moving project to pod");
+
+  const exec = new k8s.Exec(kc);
+  let stdout = "";
+  let stderr = "";
+
+  if (isOnS3) {
+    //pulling code from S3
+    const s3Bucket = "";
+    const s3Key = "";
+
+    const command = [
+      "/bin/sh",
+      "-c",
+      `aws s3 cp s3://${s3Bucket}/${s3Key} /tmp/code.zip && unzip /tmp/code.zip -d /app && rm /tmp/code.zip`,
+    ];
+    await new Promise((resolve, reject) => {
+      exec.exec(
+        "user-apps",
+        projectId,
+        "code-server",
+        command,
+        new Writable({
+          write: (
+            chunk: Buffer,
+            encoding: BufferEncoding,
+            callback: () => void,
+          ) => {
+            stdout += chunk;
+            callback();
+          },
+        }),
+        new Writable({
+          write: (
+            chunk: Buffer,
+            encoding: BufferEncoding,
+            callback: () => void,
+          ) => {
+            stderr += chunk;
+            callback();
+          },
+        }),
+        null,
+        false,
+        (status) => {
+          console.log("Exec status:", status);
+          console.log("Stdout:", stdout);
+          console.log("Stderr:", stderr);
+          if (status?.status === "Success") resolve(status);
+          else reject(new Error("Failed to pull and extract S3 code"));
+        },
+      );
+    });
+  } else {
     console.log(`mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`);
 
-    exec.exec("user-apps", projectId, "code-server", ["/bin/sh", "-c", `mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`], 
-        new Writable({
-            write: (chunk: Buffer, encoding: BufferEncoding, callback: () => void) => {
-                stdout += chunk;
-                callback();
-            }
-        }), 
-        new Writable({
-            write: (chunk: Buffer, encoding: BufferEncoding, callback: () => void) => {
-                stderr += chunk;
-                callback();
-            }
-        }), 
-        null,
-        false, 
-        (status) => {
-            console.log(status);
-            console.log(stdout);
-            console.log(stderr);
-        }
+    exec.exec(
+      "user-apps",
+      projectId,
+      "code-server",
+      [
+        "/bin/sh",
+        "-c",
+        `mv ${PROJECT_TYPE_TO_BASE_FOLDER[projectType]}/* /app`,
+      ],
+      new Writable({
+        write: (
+          chunk: Buffer,
+          encoding: BufferEncoding,
+          callback: () => void,
+        ) => {
+          stdout += chunk;
+          callback();
+        },
+      }),
+      new Writable({
+        write: (
+          chunk: Buffer,
+          encoding: BufferEncoding,
+          callback: () => void,
+        ) => {
+          stderr += chunk;
+          callback();
+        },
+      }),
+      null,
+      false,
+      (status) => {
+        console.log(status);
+        console.log(stdout);
+        console.log(stderr);
+      },
     );
+  }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log(stdout);
-    console.log(stderr);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  console.log(stdout);
+  console.log(stderr);
 
-    console.log(`Assigned project ${projectId} to pod ${projectId}`);
+  console.log(`Assigned project ${projectId} to pod ${projectId}`);
 }
 
 app.get("/worker/:projectId", async (req, res) => {
-    console.log("Received request to assign project to pod for project", req.params.projectId);
-    const { projectId } = req.params;
-    const project = await prismaClient.project.findUnique({
-        where: {
-            id: projectId,
-        },
-    });
+  console.log(
+    "Received request to assign project to pod for project",
+    req.params.projectId,
+  );
+  const { projectId } = req.params;
+  const project = await prismaClient.project.findUnique({
+    where: {
+      id: projectId,
+    },
+  });
 
-    if (!project) {
-        res.status(404).json({ error: "Project not found" });
-        return;
-    }
+  if (!project) {
+    res.status(404).json({ error: "Project not found" });
+    return;
+  }
 
-    console.log("Project found, assigning to pod");
-    const startTime = Date.now();
-    await assignPodToProject(projectId, "REACT");
-    console.log("Pod assigned, sending response");
-    containerCreateBucket.observe({ type: project.type }, Date.now() - startTime);
+  const projectType = project.type as ProjectType;
+  const isOnS3 = project.onS3;
+  //if code is on s3 then we don't needed baseimage with initial code
+  // only needed baseimage with respective run time
 
-    res.json({ 
-        sessionUrl: `https://session-${projectId}.${DOMAIN}`, 
-        previewUrl: `https://preview-${projectId}.${DOMAIN}`, 
-        workerUrl: `https://worker-${projectId}.${DOMAIN}` 
-    });
+  console.log("Project found, assigning to pod");
+  const startTime = Date.now();
+
+  await assignPodToProject(projectId, projectType, isOnS3); //argument as projectType
+
+  console.log("Pod assigned, sending response");
+  containerCreateBucket.observe({ type: project.type }, Date.now() - startTime);
+
+  res.json({
+    sessionUrl: `https://session-${projectId}.${DOMAIN}`,
+    previewUrl: `https://preview-${projectId}.${DOMAIN}`,
+    workerUrl: `https://worker-${projectId}.${DOMAIN}`,
+  });
 });
 
 app.get("/metrics", async (req, res) => {
-    res.setHeader('Content-Type', promClient.register.contentType);
-    res.end(await promClient.register.metrics());
+  res.setHeader("Content-Type", promClient.register.contentType);
+  res.end(await promClient.register.metrics());
 });
 
 app.listen(7001, () => {
-    console.log("Server is running on port 7001");
+  console.log("Server is running on port 7001");
 });

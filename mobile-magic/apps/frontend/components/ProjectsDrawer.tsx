@@ -8,7 +8,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 
-import { SignedIn, useClerk, UserButton, useUser } from "@clerk/nextjs";
+import { SignedIn, UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageSquareIcon, SearchIcon, UmbrellaOff } from "lucide-react";

@@ -21,13 +21,14 @@ model User {
 }
 
 model Project {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   prompt      Prompt[]
   actions     Action[]
   type        ProjectType @default(NEXTJS)
+  onS3        Boolean     @default(false)
   userId      String
 }
 
@@ -38,14 +39,14 @@ enum ProjectType {
 }
 
 model Prompt {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   content   String
   type      PromptType
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  project   Project  @relation(fields: [projectId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  project   Project    @relation(fields: [projectId], references: [id])
   projectId String
-  actions    Action[]
+  actions   Action[]
 }
 
 model Action {
@@ -63,5 +64,3 @@ enum PromptType {
   USER
   SYSTEM
 }
-
-

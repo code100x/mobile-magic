@@ -2,18 +2,19 @@ import { prismaClient } from "db/client";
 import express from "express";
 import cors from "cors";
 import { authMiddleware } from "common/middleware";
-import promMid from 'express-prometheus-middleware'
+import promMid from "express-prometheus-middleware";
 
 const app = express();
 
-app.use(promMid({
-  metricsPath: '/metrics',
-  collectDefaultMetrics: true,
-  requestDurationBuckets: [0.1, 0.5, 1, 1.5],
-  requestLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
-  responseLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
-}));
-
+app.use(
+  promMid({
+    metricsPath: "/metrics",
+    collectDefaultMetrics: true,
+    requestDurationBuckets: [0.1, 0.5, 1, 1.5],
+    requestLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
+    responseLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
+  }),
+);
 
 app.use(express.json());
 app.use(cors());
@@ -31,9 +32,11 @@ app.post("/project", authMiddleware, async (req, res) => {
 
 app.get("/projects", authMiddleware, async (req, res) => {
   const userId = req.userId!;
+  console.log("userId: ", userId);
   const projects = await prismaClient.project.findMany({
     where: { userId },
   });
+  console.log("projects: ", projects);
   res.json({ projects });
 });
 

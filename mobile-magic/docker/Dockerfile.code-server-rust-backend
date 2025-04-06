@@ -1,0 +1,31 @@
+FROM codercom/code-server:4.96.4
+
+USER root
+RUN apt-get update \
+    && apt-get install -y curl \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+USER coder
+EXPOSE 8080
+
+# Clone repo and copy Rust template (adjust path when available)
+RUN git clone https://github.com/code100x/mobile-magic.git /tmp/bolty-worker \
+    && cp -r /tmp/bolty-worker/rust-backend /app \
+    && rm -rf /tmp/bolty-worker
+
+
+WORKDIR /app
+ //working on it
+
+
+RUN wget https://github.com/code100x/mobile-magic/raw/refs/heads/main/ext/bolty-listener-0.0.1.vsix \
+    && code-server --install-extension bolty-listener-0.0.1.vsix \
+    && rm bolty-listener-0.0.1.vsix
+
+
+RUN mkdir -p /home/coder/.local/share/code-server/User \
+    && echo '{"workbench.colorTheme": "Dark+", "workbench.preferredDarkColorTheme": "Dark+"}' > /home/coder/.local/share/code-server/User/settings.json
+
+CMD ["code-server", "--auth", "none", "--bind-addr", "0.0.0.0:8080", "--disable-telemetry", "/app"]

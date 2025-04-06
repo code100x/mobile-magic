@@ -12,6 +12,7 @@
     "@kubernetes/client-node": "^1.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "aws-sdk": "^2.1692.0",
     "cors": "^2.8.5",
     "db": "*",
     "express": "^4.21.2",
